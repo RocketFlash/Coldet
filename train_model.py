@@ -2,12 +2,15 @@ import numpy as np
 import keras
 from load_data import load_data
 
-from resnet import RESNET
+from models import RESNET
 
 import matplotlib 
 matplotlib.use('agg')
 import matplotlib.pyplot as plt 
 
+import wandb
+from wandb.keras import WandbCallback
+wandb.init(project="coldet")
 
 dataset_path = 'dataset'
 data_files = ["data_soft.npy", "data_hard.npy", "data_mixed.npy"]

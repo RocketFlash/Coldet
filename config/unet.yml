@@ -1,0 +1,21 @@
+input_shape : (128, 32, 21)
+input_shape_t : (1, 7)
+
+output_directory: output/
+model_name: crossentropy 
+optimizer: adam
+scenario: 1
+with_coordconv: False
+n_filters: 16 
+dropout: 0.5
+batchnorm: True
+metrics: 
+  - accuracy
+  - dice
+loss: 
+  - binary_crossentropy
+  - dice_and_iou
+verbose: True
+
+
+
