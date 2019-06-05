@@ -1,17 +1,17 @@
-from unet import UNET
+from unet2 import UNET2
 from keras.optimizers import Adam, RMSprop
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from load_data_collision import load_data
 import losses
 
 metrics = [losses.dice]
-loss = [losses.dice_and_iou]
+loss = [losses.dice_and_binary_crossentropy]
 optimizer = Adam()
 
 input_shape = (128, 32, 21)
 input_shape_t = (1, 7)
 
-model = UNET('output/', input_shape, input_shape_t, model_name='dice_and_iou', scenario=2,
+model = UNET2('output/', input_shape, input_shape_t, model_name='dice_and_bce2', scenario=2,
              metrics=metrics, loss=loss, verbose=True)
 print('Model was created!')
 

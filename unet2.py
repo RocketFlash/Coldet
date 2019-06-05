@@ -69,13 +69,13 @@ class UNET2:
             h1 = Dropout(dropout)(h1)
             h2 = Dense(32768, activation='relu')(h1)
         elif self.scenario == 3:
-            h1 = Dense(32, activation='relu')(input_torques)
+            h1 = Dense(128, activation='relu')(input_torques)
             h1 = Dropout(dropout)(h1)
-            h2 = Dense(64, activation='relu')(h1)
+            h2 = Dense(512, activation='relu')(h1)
             # h2 = Dropout(dropout)(h2)
-            h3 = Dense(64, activation='relu')(h2)
+            h3 = Dense(2048, activation='relu')(h2)
             # h3 = Dropout(dropout)(h3)
-            h4 = Dense(1024, activation='relu')(h3)
+            h4 = Dense(16384, activation='relu')(h3)
 
         # contracting path
         c1 = self.conv2d_block(input_jacobians, n_filters=n_filters*1,
@@ -89,31 +89,30 @@ class UNET2:
         elif self.scenario == 1 or self.scenario == 2:
             c2 = self.conv2d_block(p1, n_filters=n_filters*2,
                                    kernel_size=3, batchnorm=batchnorm)
-
-        c2 = self.conv2d_block(p1, n_filters=n_filters*2,
-                               kernel_size=3, batchnorm=batchnorm)
-        p2 = MaxPooling2D((2, 2))(c2)
-        p2 = Dropout(dropout)(p2)
+        
 
         # add values to bottleneck
         if self.scenario == 1:
-            h4_reshaped = Reshape(tuple(p2.shape[1:3].as_list())+(1,))(h4)
-            p2_combined = Add()([p2, h4_reshaped])
+            h4_reshaped = Reshape(tuple(c2.shape[1:3].as_list())+(1,))(h4)
+            p2_combined = Add()([c2, h4_reshaped])
             # p4_combined = Multiply()([p4, h4_reshaped])
         elif self.scenario == 2:
-            p2_reshaped = Flatten()(p2)
+            p2_reshaped = Flatten()(c2)
             p2_sum = Add()([p2_reshaped, h2])
-            p2_combined = Reshape(tuple(p2.shape[1:].as_list()))(p2_sum)
+            p2_combined = Reshape(tuple(c2.shape[1:].as_list()))(p2_sum)
         elif self.scenario == 3:
-            h4_reshaped = Reshape(tuple(p2.shape[1:].as_list()))(h4)
-            p2_combined = Concatenate()([p2, h4_reshaped])
+            h4_reshaped = Reshape(tuple(c2.shape[1:].as_list()))(h4)
+            p2_combined = Concatenate()([c2, h4_reshaped])
+
+        p2_combined = MaxPooling2D((2, 2))(p2_combined)
+        p2_combined = Dropout(dropout)(p2_combined)
 
         c3 = self.conv2d_block(p2_combined, n_filters=n_filters*4,
                                kernel_size=3, batchnorm=batchnorm)
         p3 = MaxPooling2D((2, 2))(c3)
         p3 = Dropout(dropout)(p3)
 
-        c4 = conv2d_block(p3, n_filters=n_filters*8,
+        c4 = self.conv2d_block(p3, n_filters=n_filters*8,
                           kernel_size=3, batchnorm=batchnorm)
         p4 = MaxPooling2D(pool_size=(2, 2))(c4)
         p4 = Dropout(dropout)(p4)

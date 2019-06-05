@@ -5,7 +5,7 @@ from scipy.ndimage import generate_binary_structure
 import cv2
 
 
-def extract_data_from_file(filename):
+def extract_data_from_file(filename, for_classification=True):
     inputs = []
     torques = []
     labels = []
@@ -20,8 +20,13 @@ def extract_data_from_file(filename):
         inputs.append(mat['dataset'][0, i][0][0][1][:, :, 7:])
         torques.append(mat['dataset'][0, i][0][0][3])
         label = mat['dataset'][0, i][0][0][2]
-        label_modified = binary_dilation(
-            label, structure=struct, iterations=1).astype(label.dtype)
+
+        if for_classification:
+            label_modified = label
+        else:
+            label_modified = binary_dilation(
+                label, structure=struct, iterations=1).astype(label.dtype)
+
         labels.append(label_modified)
         # cv2.imwrite('dataset/images/label{}.png'.format(i), label*255)
         # cv2.imwrite('dataset/images/label_modified{}.png'.format(i),
@@ -36,8 +41,8 @@ for j in range(10):
         filename='dataset_unet{}'.format(j+1))
 
     data_collision = {'X1': X_jac, 'X2': X_tor, 'y': y_col}
-    np.save("dataset/collision_dataset{}.npy".format(j+1), data_collision)
-    print('Done: collision_dataset{}.npy file was created!'.format(j+1))
+    np.save("dataset/collision_dataset_classification{}.npy".format(j+1), data_collision)
+    print('Done: collision_dataset_classification{}.npy file was created!'.format(j+1))
 
 # X_jac, X_tor, y_col = extract_data_from_file(
 #     filename='mini_dataset')

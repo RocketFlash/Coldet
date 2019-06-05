@@ -9,7 +9,7 @@ import keras.backend as K
 import losses
 
 model = keras.models.load_model(
-    'output/unet_best_model.hdf5', custom_objects={'dice_and_binary_crossentropy': losses.dice_and_binary_crossentropy, 'dice': losses.dice})
+    'output/unet_best_model_dice_and_bce2.hdf5', custom_objects={'dice_and_binary_crossentropy': losses.dice_and_binary_crossentropy, 'dice': losses.dice})
 
 
 data_train, data_val, data_test = load_data(
