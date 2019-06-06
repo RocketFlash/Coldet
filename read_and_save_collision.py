@@ -2,6 +2,7 @@ import scipy.io
 import numpy as np
 from scipy.ndimage.morphology import binary_dilation
 from scipy.ndimage import generate_binary_structure
+import h5py
 import cv2
 
 
@@ -36,13 +37,25 @@ def extract_data_from_file(filename, for_classification=True):
     return np.array(inputs), np.array(torques), np.array(labels)
 
 
+save_hdf5 = True
+save_npy = True
+filename = 'collision_dataset'
+for_classification = False
+
 for j in range(10):
     X_jac, X_tor, y_col = extract_data_from_file(
-        filename='dataset_unet{}'.format(j+1))
+        filename='dataset_unet{}'.format(j+1), for_classification=for_classification)
 
-    data_collision = {'X1': X_jac, 'X2': X_tor, 'y': y_col}
-    np.save("dataset/collision_dataset_classification{}.npy".format(j+1), data_collision)
-    print('Done: collision_dataset_classification{}.npy file was created!'.format(j+1))
+    if save_npy:
+        data_collision = {'X1': X_jac, 'X2': X_tor, 'y': y_col}
+        np.save("dataset/{}{}.npy".format(filename,j+1), data_collision)
+        print('Done: {}{}.npy file was created!'.format(filename,j+1))
+    if save_hdf5:
+        with h5py.File("dataset/{}{}.hdf5".format(filename,j+1), 'w') as f:
+            f.create_dataset("X_jac", data=X_jac)
+            f.create_dataset("X_tor", data=X_tor)
+            f.create_dataset("y_col", data=y_col)
+        print('Done: {}{}.hdf5 file was created!'.format(filename,j+1))
 
 # X_jac, X_tor, y_col = extract_data_from_file(
 #     filename='mini_dataset')

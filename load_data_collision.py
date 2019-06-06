@@ -1,9 +1,10 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
+import h5py
 # import cv2
 
 
-def load_data(filename, for_classification=False, grid_size=(20, 8), num_files=10, num_samples=1000, test_size=0.2, val_size=0.1, to_log=False):
+def load_data(filename, file_type='hdf5', for_classification=False, grid_size=(20, 8), num_files=10, num_samples=1000, test_size=0.2, val_size=0.1, to_log=False):
 
     X1s_train, X1s_test, X1s_val = [], [], []
     X2s_train, X2s_test, X2s_val = [], [], []
@@ -11,10 +12,18 @@ def load_data(filename, for_classification=False, grid_size=(20, 8), num_files=1
     for i in range(num_files):
         if to_log:
             print('Read file number{}'.format(i+1))
-        dt = np.load('dataset/{}{}.npy'.format(filename, i+1))
-        X1 = dt.item().get('X1')
-        X2 = dt.item().get('X2')
-        y = dt.item().get('y')
+        
+        if file_type=='hdf5':
+            with h5py.File('dataset/{}{}.hdf5'.format(filename,i+1), 'r') as f:
+                X1 = f['X_jac'][:]
+                X2 = f['X_tor'][:]
+                y = f['y_col'][:]
+
+        elif file_type=='npy':
+            dt = np.load('dataset/{}{}.npy'.format(filename, i+1))
+            X1 = dt.item().get('X1')
+            X2 = dt.item().get('X2')
+            y = dt.item().get('y')
 
         if for_classification:
             y_class = np.zeros(

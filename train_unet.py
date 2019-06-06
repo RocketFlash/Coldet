@@ -7,7 +7,7 @@ model = UNET('config/unet.yml')
 print('Model was created!')
 
 data_train, data_val, data_test = load_data(
-    'collision_dataset', num_files=10, num_samples=1000, to_log=True)
+    'collision_dataset', file_type='hdf5', num_files=10, num_samples=1000, to_log=True)
 
 print('Data was loaded!')
 X1_train, X2_train, y_train = data_train

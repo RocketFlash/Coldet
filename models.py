@@ -40,21 +40,35 @@ class UNET:
         self.scenario = train_params['scenario']
         self.model_name = train_params['model_name']
         self.optimizer = train_params['optimizer']
-        self.model = self.build_model(
-            train_params['input_jacobians_shape'], train_params['input_torques_shape'], train_params['n_filters'], train_params['dropout'], train_params['batchnorm'])
+        input_jacobians_shape = train_params['input_jacobians_shape']
+        input_torques_shape = train_params['input_torques_shape']
+        print(input_jacobians_shape)
+        print(input_torques_shape)
+        self.model = self.build_model(input_jacobians_shape=input_jacobians_shape, 
+                                      input_torques_shape=input_torques_shape, 
+                                      n_filters=train_params['n_filters'], 
+                                      dropout=train_params['dropout'], 
+                                      batchnorm=train_params['batchnorm'],
+                                      with_coordconv=train_params['with_coordconv'],
+                                      with_wandb=train_params['with_wandb'])
         if(train_params['verbose'] == True):
             self.model.summary()
         self.verbose = train_params['verbose']
         self.model.save_weights(self.output_directory+'unet_model_init.hdf5')
 
     def conv2d_block(self, input_tensor, n_filters, kernel_size=3, batchnorm=True, with_coordconv=False, with_wandb=False):
+        x = input_tensor
         # first layer
+        if with_coordconv:
+            x = CoordinateChannel2D(x)
         x = Conv2D(filters=n_filters, kernel_size=(kernel_size, kernel_size), kernel_initializer="he_normal",
-                   padding="same")(input_tensor)
+                   padding="same")(x)
         if batchnorm:
             x = BatchNormalization()(x)
         x = Activation("relu")(x)
         # second layer
+        if with_coordconv:
+            x = CoordinateChannel2D(x)
         x = Conv2D(filters=n_filters, kernel_size=(kernel_size, kernel_size), kernel_initializer="he_normal",
                    padding="same")(x)
         if batchnorm:
@@ -62,7 +76,7 @@ class UNET:
         x = Activation("relu")(x)
         return x
 
-    def build_model(self, input_jacobians_shape, input_torques_shape, n_filters=16, dropout=0.5, batchnorm=True, with_wandb=False):
+    def build_model(self, input_jacobians_shape, input_torques_shape, n_filters=16, dropout=0.5, batchnorm=True, with_coordconv=False, with_wandb=False):
 
         input_jacobians = Input(shape=input_jacobians_shape, name='input_jac')
 
@@ -180,6 +194,7 @@ class UNET:
                             save_best_only=True)
         ]
         if with_wandb:
+            wandb.init(project="coldet")
             callbacks.append(WandbCallback())
         self.callbacks = callbacks
 

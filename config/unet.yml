@@ -1,20 +1,22 @@
-input_shape : (128, 32, 21)
-input_shape_t : (1, 7)
+input_jacobians_shape : [128, 32, 21]
+input_torques_shape : [1, 7]
 
 output_directory: output/
-model_name: crossentropy 
+model_name: unet_dice_and_bce
 optimizer: adam
 scenario: 1
-with_coordconv: False
+with_coordconv: True
+with_wandb: True
 n_filters: 16 
 dropout: 0.5
 batchnorm: True
 metrics: 
-  - accuracy
+  # - accuracy
   - dice
 loss: 
-  - binary_crossentropy
-  - dice_and_iou
+  # - binary_crossentropy
+  # - dice_and_iou
+  - dice_and_bce
 verbose: True
 
 

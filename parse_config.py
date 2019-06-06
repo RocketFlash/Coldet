@@ -18,9 +18,12 @@ def parse_train_params(filename='unet.yml'):
             loss.append('binary_crossentropy')
         elif l == 'dice_and_iou':
             loss.append(losses.dice_and_iou)
+        elif l == 'dice_and_bce':
+            loss.append(losses.dice_and_binary_crossentropy)
     if cfg['optimizer'] == 'adam':
-        params['optimizer'] = Adam()
+        optimizer = Adam()
     params = {k:v for k,v in cfg.items() if k not in ['metrics', 'loss', 'optimizer']}
     params['metrics'] = metrics
     params['loss'] = loss
+    params['optimizer'] = optimizer
     return params
