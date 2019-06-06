@@ -38,7 +38,7 @@ def extract_data_from_file(filename, for_classification=True):
 
 
 save_hdf5 = True
-save_npy = True
+save_npy = False
 filename = 'collision_dataset'
 for_classification = False
 

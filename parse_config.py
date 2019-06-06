@@ -5,7 +5,7 @@ from keras.optimizers import Adam
 def parse_train_params(filename='unet.yml'):
     params = {}
     with open(filename, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, Loader=yaml.SafeLoader)
     metrics = []
     loss = []
     for m in cfg['metrics']:
