@@ -22,7 +22,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.preprocessing import LabelEncoder
 
-from scipy.interpolate import spline
+from scipy.interpolate import interp1d
 from scipy.io import loadmat
 
 def readucr(filename):
@@ -141,7 +141,7 @@ def transform_to_same_length(x,n_var,max_length):
         for j in range(n_var):
             ts = mts[j]
             # linear interpolation
-            new_ts = spline(idx,ts,idx_new)
+            new_ts = interp1d(idx,ts,idx_new)
             ucr_x[i,:,j] = new_ts
 
     return ucr_x
@@ -598,10 +598,10 @@ def viz_cam(root_dir):
 
                 x = np.linspace(0,ts.shape[1]-1,max_length,endpoint=True)
                 # linear interpolation to smooth
-                y = spline(range(ts.shape[1]),ts[0,:,0],x)
+                y = interp1d(range(ts.shape[1]),ts[0,:,0],x)
                 if any(y<-2.2  ):
                     continue
-                cas = spline(range(ts.shape[1]),cas,x)
+                cas = interp1d(range(ts.shape[1]),cas,x)
                 cas = cas.astype(int)
                 plt.scatter(x=x,y=y,c=cas,cmap='jet', marker='.',s=1,vmin=0,vmax = 100)
                 if dataset_name == 'Gun_Point':

@@ -16,7 +16,6 @@ import tensorflow as tf
 from coord import CoordinateChannel2D
 import os
 
-import pandas as pd 
 import time
 
 import matplotlib 
@@ -40,8 +39,6 @@ class UNET:
         self.optimizer = train_params['optimizer']
         input_jacobians_shape = train_params['input_jacobians_shape']
         input_torques_shape = train_params['input_torques_shape']
-        print(input_jacobians_shape)
-        print(input_torques_shape)
         self.model = self.build_model(input_jacobians_shape=input_jacobians_shape, 
                                       input_torques_shape=input_torques_shape, 
                                       n_filters=train_params['n_filters'], 
@@ -52,13 +49,15 @@ class UNET:
         if(train_params['verbose'] == True):
             self.model.summary()
         self.verbose = train_params['verbose']
-        self.model.save_weights(self.output_directory+'unet_model_init.hdf5')
+        if not os.path.exists(self.output_directory):
+            os.makedirs(self.output_directory)
+        self.model.save_weights(self.output_directory+self.model_name+'_init.hdf5')
 
     def conv2d_block(self, input_tensor, n_filters, kernel_size=3, batchnorm=True, with_coordconv=False, with_wandb=False):
         x = input_tensor
         # first layer
         if with_coordconv:
-            x = CoordinateChannel2D(x)
+            x = CoordinateChannel2D()(x)
         x = Conv2D(filters=n_filters, kernel_size=(kernel_size, kernel_size), kernel_initializer="he_normal",
                    padding="same")(x)
         if batchnorm:
@@ -66,7 +65,7 @@ class UNET:
         x = Activation("relu")(x)
         # second layer
         if with_coordconv:
-            x = CoordinateChannel2D(x)
+            x = CoordinateChannel2D()(x)
         x = Conv2D(filters=n_filters, kernel_size=(kernel_size, kernel_size), kernel_initializer="he_normal",
                    padding="same")(x)
         if batchnorm:
@@ -105,26 +104,26 @@ class UNET:
 
         # contracting path
         c1 = self.conv2d_block(input_jacobians, n_filters=n_filters*1,
-                               kernel_size=3, batchnorm=batchnorm)
+                               kernel_size=3, batchnorm=batchnorm, with_coordconv=with_coordconv)
         p1 = MaxPooling2D((2, 2))(c1)
         p1 = Dropout(dropout*0.5)(p1)
 
         c2 = self.conv2d_block(p1, n_filters=n_filters*2,
-                               kernel_size=3, batchnorm=batchnorm)
+                               kernel_size=3, batchnorm=batchnorm, with_coordconv=with_coordconv)
         p2 = MaxPooling2D((2, 2))(c2)
         p2 = Dropout(dropout)(p2)
 
         c3 = self.conv2d_block(p2, n_filters=n_filters*4,
-                               kernel_size=3, batchnorm=batchnorm)
+                               kernel_size=3, batchnorm=batchnorm, with_coordconv=with_coordconv)
         p3 = MaxPooling2D((2, 2))(c3)
         p3 = Dropout(dropout)(p3)
 
         if self.scenario == 3:
             c4 = self.conv2d_block(p3, n_filters=n_filters*4,
-                                   kernel_size=3, batchnorm=batchnorm)
+                                   kernel_size=3, batchnorm=batchnorm, with_coordconv=with_coordconv)
         elif self.scenario == 1 or self.scenario == 2:
             c4 = self.conv2d_block(p3, n_filters=n_filters*8,
-                                   kernel_size=3, batchnorm=batchnorm)
+                                   kernel_size=3, batchnorm=batchnorm, with_coordconv=with_coordconv)
         p4 = MaxPooling2D(pool_size=(2, 2))(c4)
         p4 = Dropout(dropout)(p4)
 
@@ -142,7 +141,7 @@ class UNET:
             p4_combined = Concatenate()([p4, h4_reshaped])
 
         c5 = self.conv2d_block(p4_combined, n_filters=n_filters*16,
-                               kernel_size=3, batchnorm=batchnorm)
+                               kernel_size=3, batchnorm=batchnorm, with_coordconv=with_coordconv)
 
         # expansive path
         u6 = Conv2DTranspose(n_filters*8, (3, 3),
@@ -150,28 +149,28 @@ class UNET:
         u6 = concatenate([u6, c4])
         u6 = Dropout(dropout)(u6)
         c6 = self.conv2d_block(u6, n_filters=n_filters*8,
-                               kernel_size=3, batchnorm=batchnorm)
+                               kernel_size=3, batchnorm=batchnorm, with_coordconv=with_coordconv)
 
         u7 = Conv2DTranspose(n_filters*4, (3, 3),
                              strides=(2, 2), padding='same')(c6)
         u7 = concatenate([u7, c3])
         u7 = Dropout(dropout)(u7)
         c7 = self.conv2d_block(u7, n_filters=n_filters*4,
-                               kernel_size=3, batchnorm=batchnorm)
+                               kernel_size=3, batchnorm=batchnorm, with_coordconv=with_coordconv)
 
         u8 = Conv2DTranspose(n_filters*2, (3, 3),
                              strides=(2, 2), padding='same')(c7)
         u8 = concatenate([u8, c2])
         u8 = Dropout(dropout)(u8)
         c8 = self.conv2d_block(u8, n_filters=n_filters*2,
-                               kernel_size=3, batchnorm=batchnorm)
+                               kernel_size=3, batchnorm=batchnorm, with_coordconv=with_coordconv)
 
         u9 = Conv2DTranspose(n_filters*1, (3, 3),
                              strides=(2, 2), padding='same')(c8)
         u9 = concatenate([u9, c1], axis=3)
         u9 = Dropout(dropout)(u9)
         c9 = self.conv2d_block(u9, n_filters=n_filters*1,
-                               kernel_size=3, batchnorm=batchnorm)
+                               kernel_size=3, batchnorm=batchnorm, with_coordconv=with_coordconv)
 
         outputs = Conv2D(1, (1, 1), activation='sigmoid')(c9)
 

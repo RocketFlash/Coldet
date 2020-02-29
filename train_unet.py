@@ -16,6 +16,6 @@ X1_test, X_test, y_test = data_test
 
 
 model.fit(X1_train, X2_train, y_train, X1_val, X2_val,
-          y_val, batch_size=2400, nb_epochs=10000)
+          y_val, batch_size=50, nb_epochs=10000)
 
 print('Done!')

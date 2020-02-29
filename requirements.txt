@@ -1,0 +1,8 @@
+matplotlib
+wandb
+pandas
+sklearn
+keras
+tensorflow-gpu
+opencv-python
+scipy
