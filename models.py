@@ -15,8 +15,6 @@ from keras import backend as K
 import tensorflow as tf
 from coord import CoordinateChannel2D
 import os
-import wandb
-from wandb.keras import WandbCallback
 
 import pandas as pd 
 import time
@@ -193,9 +191,6 @@ class UNET:
             ModelCheckpoint(filepath=file_path, verbose=1, monitor='loss',
                             save_best_only=True)
         ]
-        if with_wandb:
-            wandb.init(project="coldet")
-            callbacks.append(WandbCallback())
         self.callbacks = callbacks
 
         return model
